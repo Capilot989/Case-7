@@ -1,3 +1,4 @@
+import ru_local as RU
 import csv
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
@@ -90,13 +91,13 @@ def save_to_csv(products, filename):
 
 
 if name == "__main__":
-    query = input("Введите поисковый запрос: ").strip()
+    query = input(f"{RU.SEARC_QUERY}").strip()
     products = parse_search(query)
 
     if not products:
-        print("Товары не найдены")
+        print(f"RU.NO_PRODUCTS")
     else:
         filename = f"{query}_products.csv"
         save_to_csv(products, filename)
-        print(f"Найдено товаров: {len(products)}")
-        print(f"Данные сохранены в файл: {filename}")
+        print(f"{RU.PRODCUTS_FOUND} {len(products)}")
+        print(f"{RU.DATA_FILE} {filename}")
