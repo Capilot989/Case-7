@@ -37,13 +37,13 @@ def parse_search(query):
             try:
                 page.wait_for_selector(".shop2-product-item.product-item", timeout=5000)
             except:
-                break  # карточек нет → конец
+                break
 
             soup = BeautifulSoup(page.content(), "html.parser")
             cards = soup.select(".shop2-product-item.product-item")
 
             if not cards:
-                break  # больше страниц нет
+                break
 
             for card in cards:
                 name_tag = card.select_one(".gr-product-name a")
@@ -63,7 +63,7 @@ def parse_search(query):
                     "image": "https://obuv-tut2000.ru" + img_tag["src"] if img_tag else None
                 })
 
-            page_num += 1  # идём на следующую страницу
+            page_num += 1
 
         browser.close()
 
