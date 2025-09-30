@@ -22,54 +22,48 @@ def parse_search(query):
             - vendor (str | None): manufacturer
             - image (str | None): image link
     """
-    url = (
-        "https://obuv-tut2000.ru/magazin/search"
-        f"?gr_smart_search=1&search_text={query}"
-    )
+    base_url = "https://obuv-tut2000.ru/magazin/search?gr_smart_search=1&search_text="
     products = []
 
-    with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=60000)
-        page.wait_for_selector(
-            ".shop2-product-item.product-item",
-            timeout=20000
-        )
 
-        soup = BeautifulSoup(page.content(), "html.parser")
+        page_num = 1
+        while True:
+            url = f"{base_url}{query}&page={page_num}"
+            page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
-        for card in soup.select(".shop2-product-item.product-item"):
-            name_tag = card.select_one(".gr-product-name a")
-            price_tag = card.select_one(".product-price .price-current strong")
-            old_price_tag = card.select_one(".product-price .price-old strong")
-            article_tag = card.select_one(".product-article")
-            vendor_tag = card.select_one(".gr-vendor-block")
-            img_tag = card.select_one(".gr-product-image img")
+            try:
+                page.wait_for_selector(".shop2-product-item.product-item", timeout=5000)
+            except:
+                break  # карточек нет → конец
 
-            products.append({
-                "name": name_tag.get_text(strip=True) if name_tag else None,
-                "link": (
-                    "https://obuv-tut2000.ru" + name_tag["href"]
-                    if name_tag else None
-                ),
-                "price": price_tag.get_text(strip=True) if price_tag else None,
-                "old_price": (
-                    old_price_tag.get_text(strip=True)
-                    if old_price_tag else None
-                ),
-                "article": (
-                    article_tag.get_text(strip=True)
-                    .replace("Артикул:", "")
-                    .strip()
-                    if article_tag else None
-                ),
-                "vendor": vendor_tag.get_text(strip=True) if vendor_tag else None,
-                "image": (
-                    "https://obuv-tut2000.ru" + img_tag["src"]
-                    if img_tag else None
-                ),
-            })
+            soup = BeautifulSoup(page.content(), "html.parser")
+            cards = soup.select(".shop2-product-item.product-item")
+
+            if not cards:
+                break  # больше страниц нет
+
+            for card in cards:
+                name_tag = card.select_one(".gr-product-name a")
+                price_tag = card.select_one(".product-price .price-current strong")
+                old_price_tag = card.select_one(".product-price .price-old strong")
+                article_tag = card.select_one(".product-article")
+                vendor_tag = card.select_one(".gr-vendor-block")
+                img_tag = card.select_one(".gr-product-image img")
+
+                products.append({
+                    "name": name_tag.get_text(strip=True) if name_tag else None,
+                    "link": "https://obuv-tut2000.ru" + name_tag["href"] if name_tag else None,
+                    "price": price_tag.get_text(strip=True) if price_tag else None,
+                    "old_price": old_price_tag.get_text(strip=True) if old_price_tag else None,
+                    "article": article_tag.get_text(strip=True).replace("Артикул:", "").strip() if article_tag else None,
+                    "vendor": vendor_tag.get_text(strip=True) if vendor_tag else None,
+                    "image": "https://obuv-tut2000.ru" + img_tag["src"] if img_tag else None
+                })
+
+            page_num += 1  # идём на следующую страницу
 
         browser.close()
 
