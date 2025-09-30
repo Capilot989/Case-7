@@ -90,7 +90,7 @@ def save_to_csv(products, filename):
         writer.writerows(products)
 
 
-if name == "__main__":
+if __name__ == "__main__":
     query = input(f"{RU.SEARC_QUERY}").strip()
     products = parse_search(query)
 
